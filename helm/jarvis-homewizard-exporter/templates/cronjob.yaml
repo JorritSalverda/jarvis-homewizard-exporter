@@ -60,6 +60,10 @@ spec:
                   key: nats-subject
             - name: MEASUREMENT_FILE_CONFIG_MAP_NAME
               value: {{ include "jarvis-homewizard-exporter.fullname" . }}
+            ports:
+            - name: udp
+              containerPort: 5353
+              protocol: UDP
             resources:
               {{- toYaml .Values.resources | nindent 14 }}
             volumeMounts:
