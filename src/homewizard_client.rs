@@ -58,6 +58,7 @@ impl MeasurementClient<Config> for HomewizardClient {
 
         info!("Discovering devices...");
         let devices = self.discover_devices()?;
+        info!("Found {} devices", devices.len());
 
         for device in devices.iter() {
             match self.get_samples(device) {
@@ -68,7 +69,7 @@ impl MeasurementClient<Config> for HomewizardClient {
             }
         }
 
-        info!("Read measurement from Homewizard devices");
+        info!("Read measurement from {} devices", devices.len());
 
         Ok(measurement)
     }
@@ -80,12 +81,27 @@ impl HomewizardClient {
     }
 
     fn get_samples(&self, device: &HomewizardDevice) -> Result<Vec<Sample>, Box<dyn Error>> {
+        info!(
+            "Fetching info for device {} ({:?})...",
+            device.fullname, device.ip_addresses
+        );
+
         // get general device data to determine type and name
         let device_info_response = reqwest::blocking::get(format!(
             "http://{}/api",
             device.ip_addresses.iter().next().unwrap()
         ))?
         .json::<DeviceInfoResponse>()?;
+
+        info!(
+            "Received info from device {} ({:?}):\n{:#?}",
+            device.fullname, device.ip_addresses, device_info_response
+        );
+
+        info!(
+            "Fetching data for device {} ({:?})...",
+            device.fullname, device.ip_addresses
+        );
 
         match HomewizardDeviceType::from_str(&device_info_response.product_type).unwrap() {
             HomewizardDeviceType::EnergySocket => {
@@ -96,6 +112,11 @@ impl HomewizardClient {
                     device_info_response.api_version
                 ))?
                 .json::<EnergySocketDataResponse>()?;
+
+                info!(
+                    "Received data from device {} ({:?}):\n{:#?}",
+                    device.fullname, device.ip_addresses, data_response
+                );
 
                 Ok(vec![
                     Sample {
@@ -133,6 +154,11 @@ impl HomewizardClient {
                 ))?
                 .json::<SinglePhaseKwhMeterDataResponse>()?;
 
+                info!(
+                    "Received data from device {} ({:?}):\n{:#?}",
+                    device.fullname, device.ip_addresses, data_response
+                );
+
                 Ok(vec![
                     Sample {
                         entity_type: EntityType::Device,
@@ -168,6 +194,11 @@ impl HomewizardClient {
                     device_info_response.api_version
                 ))?
                 .json::<TriplePhaseKwhMeterDataResponse>()?;
+
+                info!(
+                    "Received data from device {} ({:?}):\n{:#?}",
+                    device.fullname, device.ip_addresses, data_response
+                );
 
                 Ok(vec![
                     Sample {
@@ -205,6 +236,11 @@ impl HomewizardClient {
                 ))?
                 .json::<WaterMeterDataResponse>()?;
 
+                info!(
+                    "Received data from device {} ({:?}):\n{:#?}",
+                    device.fullname, device.ip_addresses, data_response
+                );
+
                 Ok(vec![
                     Sample {
                         entity_type: EntityType::Device,
@@ -232,6 +268,11 @@ impl HomewizardClient {
                     device_info_response.api_version
                 ))?
                 .json::<P1MeterDataResponse>()?;
+
+                info!(
+                    "Received data from device {} ({:?}):\n{:#?}",
+                    device.fullname, device.ip_addresses, data_response
+                );
 
                 Ok(vec![
                     Sample {
@@ -296,7 +337,7 @@ impl HomewizardClient {
         while let Ok(event) = receiver.recv() {
             match event {
                 ServiceEvent::ServiceResolved(info) => {
-                    println!(
+                    info!(
                         "At {:?}: Resolved a new service: {} IP: {:?}",
                         start.elapsed(),
                         info.get_fullname(),
@@ -315,7 +356,7 @@ impl HomewizardClient {
                     );
                 }
                 other_event => {
-                    println!(
+                    info!(
                         "At {:?} : Received other event: {:?}",
                         start.elapsed(),
                         &other_event
