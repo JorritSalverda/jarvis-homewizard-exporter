@@ -51,7 +51,7 @@ impl MeasurementClient<Config> for HomewizardClient {
         let mut measurement = Measurement {
             id: Uuid::new_v4().to_string(),
             source: String::from("jarvis-homewizard-exporter"),
-            location: config.location,
+            location: config.location.clone(),
             samples: Vec::new(),
             measured_at_time: Utc::now(),
         };
@@ -61,7 +61,7 @@ impl MeasurementClient<Config> for HomewizardClient {
         info!("Found {} devices", devices.len());
 
         for device in devices.iter() {
-            match self.get_samples(device) {
+            match self.get_samples(&config, device) {
                 Ok(samples) => {
                     measurement.samples.append(&mut samples.clone());
                 }
@@ -80,7 +80,11 @@ impl HomewizardClient {
         Self { config }
     }
 
-    fn get_samples(&self, device: &HomewizardDevice) -> Result<Vec<Sample>, Box<dyn Error>> {
+    fn get_samples(
+        &self,
+        config: &Config,
+        device: &HomewizardDevice,
+    ) -> Result<Vec<Sample>, Box<dyn Error>> {
         info!(
             "Fetching info for device {} ({:?})...",
             device.fullname, device.ip_addresses
@@ -98,9 +102,16 @@ impl HomewizardClient {
             device.fullname, device.ip_addresses, device_info_response
         );
 
+        let friendly_name: String =
+            if let Some(name) = config.names.get(&device_info_response.serial) {
+                name.clone()
+            } else {
+                device_info_response.product_name.clone()
+            };
+
         info!(
-            "Fetching data for device {} ({:?})...",
-            device.fullname, device.ip_addresses
+            "Fetching data for device {} with friendly name {} ({:?})...",
+            device.fullname, friendly_name, device.ip_addresses
         );
 
         match HomewizardDeviceType::from_str(&device_info_response.product_type).unwrap() {
@@ -114,8 +125,8 @@ impl HomewizardClient {
                 .json::<EnergySocketDataResponse>()?;
 
                 info!(
-                    "Received data from device {} ({:?}):\n{:#?}",
-                    device.fullname, device.ip_addresses, data_response
+                    "Received data from device {} with friendly name {} ({:?}):\n{:#?}",
+                    device.fullname, friendly_name, device.ip_addresses, data_response
                 );
 
                 Ok(vec![
@@ -123,7 +134,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name.clone(),
                         metric_type: MetricType::Counter,
                         value: data_response.total_power_import_t1_kwh * 1000.0 * 3600.0,
                     },
@@ -131,7 +142,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityProduction,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name.clone(),
                         metric_type: MetricType::Counter,
                         value: data_response.total_power_export_t1_kwh * 1000.0 * 3600.0,
                     },
@@ -139,7 +150,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name,
                         metric_type: MetricType::Gauge,
                         value: data_response.active_power_w,
                     },
@@ -155,8 +166,8 @@ impl HomewizardClient {
                 .json::<SinglePhaseKwhMeterDataResponse>()?;
 
                 info!(
-                    "Received data from device {} ({:?}):\n{:#?}",
-                    device.fullname, device.ip_addresses, data_response
+                    "Received data from device {} with friendly name {} ({:?}):\n{:#?}",
+                    device.fullname, friendly_name, device.ip_addresses, data_response
                 );
 
                 Ok(vec![
@@ -164,7 +175,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name.clone(),
                         metric_type: MetricType::Counter,
                         value: data_response.total_power_import_t1_kwh * 1000.0 * 3600.0,
                     },
@@ -172,7 +183,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityProduction,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name.clone(),
                         metric_type: MetricType::Counter,
                         value: data_response.total_power_export_t1_kwh * 1000.0 * 3600.0,
                     },
@@ -180,7 +191,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name,
                         metric_type: MetricType::Gauge,
                         value: data_response.active_power_w,
                     },
@@ -196,8 +207,8 @@ impl HomewizardClient {
                 .json::<TriplePhaseKwhMeterDataResponse>()?;
 
                 info!(
-                    "Received data from device {} ({:?}):\n{:#?}",
-                    device.fullname, device.ip_addresses, data_response
+                    "Received data from device {} with friendly name {} ({:?}):\n{:#?}",
+                    device.fullname, friendly_name, device.ip_addresses, data_response
                 );
 
                 Ok(vec![
@@ -205,7 +216,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name.clone(),
                         metric_type: MetricType::Counter,
                         value: data_response.total_power_import_t1_kwh * 1000.0 * 3600.0,
                     },
@@ -213,7 +224,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityProduction,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name.clone(),
                         metric_type: MetricType::Counter,
                         value: data_response.total_power_export_t1_kwh * 1000.0 * 3600.0,
                     },
@@ -221,7 +232,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name,
                         metric_type: MetricType::Gauge,
                         value: data_response.active_power_w,
                     },
@@ -237,8 +248,8 @@ impl HomewizardClient {
                 .json::<WaterMeterDataResponse>()?;
 
                 info!(
-                    "Received data from device {} ({:?}):\n{:#?}",
-                    device.fullname, device.ip_addresses, data_response
+                    "Received data from device {} with friendly name {} ({:?}):\n{:#?}",
+                    device.fullname, friendly_name, device.ip_addresses, data_response
                 );
 
                 Ok(vec![
@@ -246,7 +257,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::WaterConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name.clone(),
                         metric_type: MetricType::Counter,
                         value: data_response.total_liter_m3,
                     },
@@ -254,7 +265,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::WaterConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name,
                         metric_type: MetricType::Gauge,
                         value: data_response.active_liter_lpm * 60.0 / 1000.0, // m3/s
                     },
@@ -270,8 +281,8 @@ impl HomewizardClient {
                 .json::<P1MeterDataResponse>()?;
 
                 info!(
-                    "Received data from device {} ({:?}):\n{:#?}",
-                    device.fullname, device.ip_addresses, data_response
+                    "Received data from device {} with friendly name {} ({:?}):\n{:#?}",
+                    device.fullname, friendly_name, device.ip_addresses, data_response
                 );
 
                 Ok(vec![
@@ -311,7 +322,7 @@ impl HomewizardClient {
                         entity_type: EntityType::Device,
                         entity_name: device_info_response.product_type.clone(),
                         sample_type: SampleType::ElectricityConsumption,
-                        sample_name: device_info_response.product_name.clone(),
+                        sample_name: friendly_name,
                         metric_type: MetricType::Gauge,
                         value: data_response.active_power_w,
                     },
@@ -501,10 +512,14 @@ mod tests {
             .discover_devices()
             .expect("Failed retrieving devices");
         let mut samples: Vec<Sample> = vec![];
+        let config = Config {
+            location: "My Home".into(),
+            names: HashMap::new(),
+        };
 
         // act
         for device in devices.iter() {
-            match homewizard_client.get_samples(&device) {
+            match homewizard_client.get_samples(&config, &device) {
                 Ok(s) => {
                     samples.append(&mut s.clone());
                 }
