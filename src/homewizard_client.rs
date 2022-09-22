@@ -220,7 +220,7 @@ impl HomewizardClient {
                         sample_type: SampleType::WaterConsumption,
                         sample_name: device_info_response.product_name.clone(),
                         metric_type: MetricType::Gauge,
-                        value: data_response.active_liter_lpm,
+                        value: data_response.active_liter_lpm * 60.0 / 1000.0, // m3/s
                     },
                 ])
             }
