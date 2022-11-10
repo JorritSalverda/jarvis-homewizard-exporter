@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: azure/setup-helm@v1
-      - run: helm lint --with-subcharts helm/jarvis-homewizard-exporter
+      - run: helm lint helm/jarvis-homewizard-exporter
       - run: helm package --app-version $GITVERSION_SEMVER --version $GITVERSION_SEMVER --dependency-update helm/jarvis-homewizard-exporter
       - uses: actions/checkout@v2
         with:
