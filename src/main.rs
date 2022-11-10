@@ -9,7 +9,10 @@ use jarvis_lib::state_client::{StateClient, StateClientConfig};
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    json_env_logger::init();
+    tracing_subscriber::fmt()
+        .json()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
 
     let homewizard_client_config = HomewizardClientConfig::from_env()?;
     let homewizard_client = HomewizardClient::new(homewizard_client_config);

@@ -3,7 +3,6 @@ use jarvis_lib::measurement_client::MeasurementClient;
 use jarvis_lib::model::{EntityType, Measurement, MetricType, Sample, SampleType};
 
 use chrono::Utc;
-use log::{debug, info};
 use mdns_sd::{ServiceDaemon, ServiceEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -12,6 +11,7 @@ use std::error::Error;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
 use std::time::Duration;
+use tracing::{debug, info};
 use uuid::Uuid;
 
 pub struct HomewizardClientConfig {
@@ -41,12 +41,12 @@ pub struct HomewizardClient {
 }
 
 impl MeasurementClient<Config> for HomewizardClient {
-    fn get_measurement(
+    fn get_measurements(
         &self,
         config: Config,
-        _last_measurement: Option<Measurement>,
-    ) -> Result<Measurement, Box<dyn Error>> {
-        info!("Reading measurement from homewizard devices...");
+        _last_measurements: Option<Vec<Measurement>>,
+    ) -> Result<Vec<Measurement>, Box<dyn Error>> {
+        info!("Reading measurements from homewizard devices...");
 
         let mut measurement = Measurement {
             id: Uuid::new_v4().to_string(),
@@ -69,9 +69,9 @@ impl MeasurementClient<Config> for HomewizardClient {
             }
         }
 
-        info!("Read measurement from {} devices", devices.len());
+        info!("Read measurements from {} devices", devices.len());
 
-        Ok(measurement)
+        Ok(vec![measurement])
     }
 }
 
