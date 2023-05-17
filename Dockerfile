@@ -11,13 +11,14 @@ ARG TARGETPLATFORM
 RUN echo "BUILDPLATFORM: $BUILDPLATFORM"
 RUN echo "TARGETPLATFORM: $TARGETPLATFORM"
 RUN case "$TARGETPLATFORM" in \
-  linux/amd64) \
+  "linux/amd64") \
   export CARGO_BUILD_TARGET=x86_64-unknown-linux-gnu \
   ;; \
-  linux/arm64) \
+  "linux/arm64") \
   export CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu \
   ;; \
-  esac
+  esac \
+  echo "CARGO_BUILD_TARGET: $CARGO_BUILD_TARGET"
 
 RUN echo "CARGO_BUILD_TARGET: $CARGO_BUILD_TARGET"
 
