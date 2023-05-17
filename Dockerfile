@@ -28,11 +28,11 @@ COPY . .
 RUN case "$TARGETPLATFORM" in \
   "linux/amd64") \
   echo "Building with target x86_64-unknown-linux-gnu..." \
-  cargo install --target=x86_64-unknown-linux-gnu \
+  cargo install --path . --target=x86_64-unknown-linux-gnu \
   ;; \
   "linux/arm64") \
   echo "Building with target aarch64-unknown-linux-gnu..." \
-  cargo install --target=aarch64-unknown-linux-gnu \
+  cargo install --path . --target=aarch64-unknown-linux-gnu \
   ;; \
   esac;
 
