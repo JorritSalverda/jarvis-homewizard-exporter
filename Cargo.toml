@@ -10,7 +10,7 @@ include = ["src/**/*", "LICENSE", "README.md"]
 [dependencies]
 chrono = "0.4"
 jarvis-lib = { git = "https://github.com/JorritSalverda/jarvis-lib", tag = "0.1.65" }
-kube = { version = "0.82", default-features = false, features = ["client", "runtime", "derive"] }
+kube = "0.82"
 mdns-sd = "0.5"
 openssl = { version = "0.10", features = ["vendored"] }
 reqwest = { version = "0.11", features = ["blocking","json","rustls-tls"] }
