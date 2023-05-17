@@ -1,5 +1,5 @@
-FROM rust:1.69 as builder
-ARG CARGO_BUILD_TARGET=
+FROM --platform=$BUILDPLATFORM rust:1.69 as builder
+# ARG CARGO_BUILD_TARGET=
 ENV CARGO_TERM_COLOR=always \
   CARGO_NET_GIT_FETCH_WITH_CLI=true \
   CC_aarch64_unknown_linux_musl=clang \
@@ -7,11 +7,22 @@ ENV CARGO_TERM_COLOR=always \
   CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
 WORKDIR /app
 
-RUN dpkg --print-architecture
-RUN exit 1
+ARG TARGETPLATFORM
+RUN echo $TARGETPLATFORM
+RUN case "$TARGETPLATFORM" in \
+  linux/amd64) \
+  export CARGO_BUILD_TARGET=x86_64-unknown-linux-gnu \
+  ;; \
+  linux/arm64) \
+  export CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu \
+  ;; \
+  esac
 
-RUN apt-get update && apt-get install -y musl-tools clang llvm libudev-dev
-RUN rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl
+RUN echo $CARGO_BUILD_TARGET
+
+# RUN apt-get update && apt-get install -y musl-tools clang llvm libudev-dev
+# RUN rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl
+RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
 COPY . .
 RUN cargo build --release
 
