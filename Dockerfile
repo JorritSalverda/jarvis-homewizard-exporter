@@ -8,7 +8,8 @@ ENV CARGO_TERM_COLOR=always \
 WORKDIR /app
 
 ARG TARGETPLATFORM
-RUN echo $TARGETPLATFORM
+RUN echo "BUILDPLATFORM: $BUILDPLATFORM"
+RUN echo "TARGETPLATFORM: $TARGETPLATFORM"
 RUN case "$TARGETPLATFORM" in \
   linux/amd64) \
   export CARGO_BUILD_TARGET=x86_64-unknown-linux-gnu \
@@ -18,7 +19,7 @@ RUN case "$TARGETPLATFORM" in \
   ;; \
   esac
 
-RUN echo $CARGO_BUILD_TARGET
+RUN echo "CARGO_BUILD_TARGET: $CARGO_BUILD_TARGET"
 
 # RUN apt-get update && apt-get install -y musl-tools clang llvm libudev-dev
 # RUN rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl
