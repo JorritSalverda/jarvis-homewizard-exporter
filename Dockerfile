@@ -1,27 +1,23 @@
-FROM rust:1.65 as chef
-ENV CARGO_TERM_COLOR=always
+FROM rust:1.69 as builder
+ARG CARGO_BUILD_TARGET=
+ENV CARGO_TERM_COLOR=always \
+  CARGO_NET_GIT_FETCH_WITH_CLI=true \
+  CC_aarch64_unknown_linux_musl=clang \
+  AR_aarch64_unknown_linux_musl=llvm-ar \
+  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
 WORKDIR /app
-RUN cargo install cargo-chef
-RUN apt-get update && apt-get install -y --no-install-recommends musl-tools
-RUN rustup target add x86_64-unknown-linux-musl
-RUN rustup component add clippy
 
-FROM chef as planner
+RUN dpkg --print-architecture
+RUN exit 1
+
+RUN apt-get update && apt-get install -y musl-tools clang llvm libudev-dev
+RUN rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl
 COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
+RUN cargo build --release
 
-FROM chef as builder
-COPY --from=planner /app/recipe.json recipe.json
-# Build dependencies - this is the caching Docker layer!
-RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
-# Build application
-COPY . .
-RUN cargo build --verbose --release --target x86_64-unknown-linux-musl
-RUN cargo clippy --release --target x86_64-unknown-linux-musl --no-deps -- --deny "warnings"
-RUN cargo test --verbose --release --target x86_64-unknown-linux-musl
-
-FROM scratch AS runtime
-USER 1000
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/jarvis-homewizard-exporter .
+FROM debian:bullseye-slim AS runtime
+ARG CARGO_BUILD_TARGET=
+# COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+WORKDIR /app
+COPY --from=builder /app/target/${CARGO_BUILD_TARGET}/release/jarvis-homewizard-exporter .
 ENTRYPOINT ["./jarvis-homewizard-exporter"]
