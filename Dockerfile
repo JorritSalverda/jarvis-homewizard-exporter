@@ -13,6 +13,19 @@ RUN echo "BUILDPLATFORM: $BUILDPLATFORM"
 ARG TARGETPLATFORM
 RUN echo "TARGETPLATFORM: $TARGETPLATFORM"
 
+RUN mkdir -p .cargo/ \
+  case "$TARGETPLATFORM" in \
+  "linux/amd64") \
+  echo "Building with target x86_64-unknown-linux-gnu..." \
+  echo -e "[build]\ntarget = \"x86_64-unknown-linux-gnu\"" > .cargo/config \
+  ;; \
+  "linux/arm64") \
+  echo "Building with target aarch64-unknown-linux-gnu..." \
+  echo -e "[build]\ntarget = \"aarch64-unknown-linux-gnu\"" > .cargo/config \
+  ;; \
+  esac; \
+  cat .cargo/config
+
 RUN apt update && apt upgrade -y
 RUN apt install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross
 
@@ -25,16 +38,7 @@ ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
 
 COPY . .
 
-RUN case "$TARGETPLATFORM" in \
-  "linux/amd64") \
-  echo "Building with target x86_64-unknown-linux-gnu..." \
-  cargo install --path . --target=x86_64-unknown-linux-gnu \
-  ;; \
-  "linux/arm64") \
-  echo "Building with target aarch64-unknown-linux-gnu..." \
-  cargo install --path . --target=aarch64-unknown-linux-gnu \
-  ;; \
-  esac;
+RUN cargo install --path . --root /usr/local/bin
 
 FROM debian:bullseye-slim AS runtime
 # COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
