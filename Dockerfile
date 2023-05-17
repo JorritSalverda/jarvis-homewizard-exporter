@@ -18,7 +18,7 @@ RUN case "$TARGETPLATFORM" in \
   "linux/arm64") \
   export CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu \
   ;; \
-  esac \
+  esac; \
   echo "CARGO_BUILD_TARGET: $CARGO_BUILD_TARGET"
 
 RUN echo "CARGO_BUILD_TARGET: $CARGO_BUILD_TARGET"
