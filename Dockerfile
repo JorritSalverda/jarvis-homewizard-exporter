@@ -26,7 +26,7 @@ RUN mkdir -p .cargo ; \
   cat .cargo/config
 
 RUN apt update && apt upgrade -y
-RUN apt install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross libudev-sys
+RUN apt install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross libudev-dev
 
 RUN rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
 # RUN rustup toolchain install stable-aarch64-unknown-linux-gnu
