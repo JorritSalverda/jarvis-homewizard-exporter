@@ -174,7 +174,7 @@ jobs:
 
   helm:
     runs-on: ubuntu-latest
-    needs: [gitversion]
+    needs: [gitversion,docker]
     env:
       GITVERSION_SEMVER: ${{ needs.gitversion.outputs.semVer }}
     steps:
@@ -203,7 +203,7 @@ jobs:
 
   tag:
     runs-on: ubuntu-latest
-    needs: [gitversion, helm]
+    needs: [gitversion,docker,helm]
     env:
       GITVERSION_SEMVER: ${{ needs.gitversion.outputs.semVer }}
     steps:
