@@ -14,14 +14,13 @@ ARG TARGETPLATFORM
 RUN echo "TARGETPLATFORM: $TARGETPLATFORM"
 
 RUN mkdir -p .cargo/ \
+  echo '[build]' > .cargo/config \
   case "$TARGETPLATFORM" in \
   "linux/amd64") \
-  echo "Building with target x86_64-unknown-linux-gnu..." \
-  echo -e "[build]\ntarget = \"x86_64-unknown-linux-gnu\"" > .cargo/config \
+  echo 'target = "x86_64-unknown-linux-gnu"' >> .cargo/config \
   ;; \
   "linux/arm64") \
-  echo "Building with target aarch64-unknown-linux-gnu..." \
-  echo -e "[build]\ntarget = \"aarch64-unknown-linux-gnu\"" > .cargo/config \
+  echo 'target = "aarch64-unknown-linux-gnu"' >> .cargo/config \
   ;; \
   esac; \
   cat .cargo/config
